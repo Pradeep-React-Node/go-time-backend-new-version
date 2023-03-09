@@ -1,0 +1,26 @@
+service: GoTime
+useDotenv: true
+provider:
+  name: aws
+  runtime: nodejs14.x # Node JS version
+  stage: production
+  region: ap-south-1
+  memorySize: 512
+
+functions:
+  app:
+    handler: app.handler
+    environment:
+      GO_TIME_DB: ${env:GO_TIME_DB}
+      ENCRYPT_KEY: ${env:ENCRYPT_KEY}
+      IM_AWS_ACCESS_KEY: ${env:IM_AWS_ACCESS_KEY}
+      IM_AWS_SECRET_KEY: ${env:IM_AWS_SECRET_KEY}
+    events:
+      - http:
+          path: /
+          method: ANY
+          cors: true
+      - http:
+          path: /{proxy+}
+          method: ANY
+          cors: true
