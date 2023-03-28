@@ -50,4 +50,14 @@ module.exports = {
       }
     );
   },
+  // get arena
+  getArenas: (req, res) => {
+    Arena.find({}, (err, arenas) => {
+      if (err) {
+        res.status(500).send('Error retrieving arenas');
+      } else {
+        res.status(200).json(arenas);
+      }
+    });
+  },
 };
