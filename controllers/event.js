@@ -1,27 +1,27 @@
-const eventSchema = require("../models/event");
-var mongoose = require("mongoose");
-const pagination = require("../utils/pagination");
-const joinEventSchema = require("../models/joinEvent");
-const userSchema = require("../models/user");
-const { mapSeries } = require("async");
+const eventSchema = require('../models/event');
+var mongoose = require('mongoose');
+const pagination = require('../utils/pagination');
+const joinEventSchema = require('../models/joinEvent');
+const userSchema = require('../models/user');
+const { mapSeries } = require('async');
 
 module.exports = {
   createEvent: (req, res) => {
     try {
       var newBodyItems = ({
         _id = mongoose.Types.ObjectId(),
-        category = "",
-        event_name = "",
-        created_by = "",
-        description = "",
+        category = '',
+        event_name = '',
+        created_by = '',
+        description = '',
         event_date = new Date(),
         start_time = new Date(),
         end_time = new Date(),
         max_players = 0,
         longitude = 0,
         latitude = 0,
-        address = "",
-        location_hint = "",
+        address = '',
+        location_hint = '',
         is_deleted = false,
       } = req?.body);
 
@@ -31,7 +31,7 @@ module.exports = {
               location:
                 longitude && latitude
                   ? {
-                      type: "Point",
+                      type: 'Point',
                       coordinates: [
                         parseFloat(newBodyItems?.longitude),
                         parseFloat(newBodyItems?.latitude),
@@ -58,14 +58,14 @@ module.exports = {
         { upsert: true, new: true, setDefaultsOnInsert: true },
         (err, response) => {
           if (!err) {
-            res.status(200).send({ status: "success", data: response });
+            res.status(200).send({ status: 'success', data: response });
           } else {
-            res.status(200).send({ status: "failed", message: err?.message });
+            res.status(200).send({ status: 'failed', message: err?.message });
           }
         }
       );
     } catch (err) {
-      res.status(200).send({ status: "failed", message: err?.message });
+      res.status(200).send({ status: 'failed', message: err?.message });
     }
   },
 
@@ -73,13 +73,13 @@ module.exports = {
     try {
       eventSchema.find({ ...req?.query }, (err, response) => {
         if (!err) {
-          res.status(200).send({ status: "success", data: response });
+          res.status(200).send({ status: 'success', data: response });
         } else {
-          res.status(200).send({ status: "failed", message: err?.message });
+          res.status(200).send({ status: 'failed', message: err?.message });
         }
       });
     } catch (err) {
-      res.status(200).send({ status: "failed", message: err?.message });
+      res.status(200).send({ status: 'failed', message: err?.message });
     }
   },
 
@@ -101,10 +101,10 @@ module.exports = {
           longitude && latitude
             ? {
                 $geoNear: {
-                  near: { type: "Point", coordinates: [longitude, latitude] },
-                  distanceField: "calculated",
+                  near: { type: 'Point', coordinates: [longitude, latitude] },
+                  distanceField: 'calculated',
                   maxDistance: 200000,
-                  includeLocs: "location",
+                  includeLocs: 'location',
                   query: { category: { $in: category } },
                   spherical: true,
                 },
@@ -117,31 +117,31 @@ module.exports = {
           { $match: { is_deleted } },
           {
             $lookup: {
-              from: "categories",
-              let: { p_id: "$category" },
+              from: 'categories',
+              let: { p_id: '$category' },
               pipeline: [
-                { $addFields: { _id: { $toString: "$_id" } } },
+                { $addFields: { _id: { $toString: '$_id' } } },
                 {
                   $match: {
                     $expr: {
                       $and: [
                         {
-                          $eq: ["$_id", "$$p_id"],
+                          $eq: ['$_id', '$$p_id'],
                         },
                       ],
                     },
                   },
                 },
               ],
-              as: "category_details",
+              as: 'category_details',
             },
           },
           {
             $replaceRoot: {
               newRoot: {
                 $mergeObjects: [
-                  { $arrayElemAt: ["$category_details", 0] },
-                  "$$ROOT",
+                  { $arrayElemAt: ['$category_details', 0] },
+                  '$$ROOT',
                 ],
               },
             },
@@ -149,7 +149,7 @@ module.exports = {
           { $limit: limit },
           { $skip: (page - 1) * limit },
         ])
-        .sort("-createdAt");
+        .sort('-createdAt');
       var totalPages;
       var allData = await eventSchema.find({});
       if (limit >= allData?.length) {
@@ -160,7 +160,7 @@ module.exports = {
         totalPages = tempPage - decimal + 1;
       }
       res.status(200).send({
-        status: "success",
+        status: 'success',
         data: {
           limit: limit,
           page: page,
@@ -169,7 +169,7 @@ module.exports = {
         },
       });
     } catch (err) {
-      res.status(200).send({ status: "failed", message: err?.message });
+      res.status(200).send({ status: 'failed', message: err?.message });
     }
   },
 
@@ -179,14 +179,14 @@ module.exports = {
       var user_id = req?.body?.user_id;
       var event = await eventSchema.findOne({ _id: event_id });
       console.log(event);
-      var maxPlayersLimit = parseInt(event?.max_players);
+      var maxPlayersLimit = parseIneventSchemat(event?.max_players);
       var allEvents = await joinEventSchema.find({ event_id });
       console.log(maxPlayersLimit);
-      console.log(allEvents?.length, "ev");
+      console.log(allEvents?.length, 'ev');
 
       if (maxPlayersLimit <= allEvents?.length) {
         res.status(200).send({
-          status: "failed",
+          status: 'failed',
           message: `Players more than ${maxPlayersLimit} not allowed`,
         });
       } else {
@@ -194,15 +194,15 @@ module.exports = {
           { event_id: event_id, user_id: user_id },
           (err, response) => {
             if (!err) {
-              res.status(200).send({ status: "success", data: response });
+              res.status(200).send({ status: 'success', data: response });
             } else {
-              res.status(200).send({ status: "failed", message: err?.message });
+              res.status(200).send({ status: 'failed', message: err?.message });
             }
           }
         );
       }
     } catch (err) {
-      res.status(200).send({ status: "failed", message: err?.message });
+      res.status(200).send({ status: 'failed', message: err?.message });
     }
   },
 
@@ -229,20 +229,20 @@ module.exports = {
             },
             (err, result) => {
               if (!err) {
-                res.status(200).send({ status: "success", data: dataToSend });
+                res.status(200).send({ status: 'success', data: dataToSend });
               } else {
                 res
                   .status(200)
-                  .send({ status: "failed", message: err?.message });
+                  .send({ status: 'failed', message: err?.message });
               }
             }
           );
         } else {
-          res.status(200).send({ status: "failed", message: err?.message });
+          res.status(200).send({ status: 'failed', message: err?.message });
         }
       });
     } catch (err) {
-      res.status(200).send({ status: "failed", message: err?.message });
+      res.status(200).send({ status: 'failed', message: err?.message });
     }
   },
 
@@ -254,14 +254,34 @@ module.exports = {
         { event_id: event_id, user_id: user_id },
         (err, response) => {
           if (!err) {
-            res.status(200).send({ status: "success", data: response });
+            res.status(200).send({ status: 'success', data: response });
           } else {
-            res.status(200).send({ status: "failed", message: err?.message });
+            res.status(200).send({ status: 'failed', message: err?.message });
           }
         }
       );
     } catch (err) {
-      res.status(200).send({ status: "failed", message: err?.message });
+      res.status(200).send({ status: 'failed', message: err?.message });
+    }
+  },
+  getByUser: async (req, res) => {
+    const createdBy = req.params.createdBy;
+    const categoryId = req.params.categoryId;
+
+    try {
+      const events = await eventSchema.find({
+        created_by: createdBy,
+        category: categoryId,
+      });
+      if (events.length === 0) {
+        return res
+          .status(404)
+          .json({ message: 'No events found for this user and category' });
+      }
+      res.status(200).json(events);
+    } catch (err) {
+      console.error(err);
+      res.status(500).json({ message: 'Server Error' });
     }
   },
 };

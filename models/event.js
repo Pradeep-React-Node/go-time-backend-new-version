@@ -1,4 +1,4 @@
-const mongoose = require("mongoose");
+const mongoose = require('mongoose');
 
 var eventSchema = new mongoose.Schema(
   {
@@ -24,6 +24,6 @@ var eventSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-eventSchema.index({ location: "2dsphere" });
+eventSchema.index({ location: '2dsphere' });
 
-module.exports = mongoose.model("Event", eventSchema);
+module.exports = mongoose.model('Event', eventSchema);

@@ -16,6 +16,7 @@ const fileUploadRouter = require('./routes/fileUpload');
 const arenaRouter = require('./routes/arena');
 const bookingRouter = require('./routes/booking');
 const sportsRouter = require('./routes/sports');
+const slotRouter = require('./routes/slot');
 const app = express();
 const CryptoJS = require('crypto-js');
 const walletRouter = require('./routes/wallet');
@@ -31,6 +32,7 @@ app.use(cors());
 app.use(upload());
 
 app.use('/api/arena', arenaRouter);
+app.use('/api/slot', slotRouter);
 
 app.use('/api/booking', bookingRouter);
 
