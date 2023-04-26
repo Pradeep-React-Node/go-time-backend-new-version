@@ -1,9 +1,9 @@
-var CryptoJS = require('crypto-js');
-const userSchema = require('../models/user');
-const jwt = require('jsonwebtoken');
-const sendMail = require('../utils/sendMail');
-const { sendOtp } = require('../utils/mailCopies');
-const verificationSchema = require('../models/verification');
+var CryptoJS = require("crypto-js");
+const userSchema = require("../models/user");
+const jwt = require("jsonwebtoken");
+const sendMail = require("../utils/sendMail");
+const { sendOtp } = require("../utils/mailCopies");
+const verificationSchema = require("../models/verification");
 
 module.exports = {
   login: async (req, res) => {
@@ -11,15 +11,15 @@ module.exports = {
       var user = await userSchema.findOne({ email: req.body?.email });
       if (!user) {
         res.status(200).send({
-          status: 'failed',
+          status: "failed",
           message: "Email or Password doesn't match!!",
         });
         return;
       }
-      if (user?.status === 'Active') {
+      if (user?.status === "Active") {
         if (
-          req?.body?.login_type === 'Google' ||
-          req?.body?.login_type === 'Facebook'
+          req?.body?.login_type === "Google" ||
+          req?.body?.login_type === "Facebook"
         ) {
           const user_details = await userSchema.findOne({
             email: req?.body?.email,
@@ -34,28 +34,27 @@ module.exports = {
           );
           if (logged_in.ok == 1) {
             res.status(200).send({
-              status: 'success',
+              status: "success",
               data: { user_details: { ...user?._doc }, token: token },
             });
           } else {
             res.status(200).send({
-              status: 'failed',
-              message: 'Unable to log you In. Please check your fields again',
+              status: "failed",
+              message: "Unable to log you In. Please check your fields again",
             });
           }
         } else {
           // Checking if passwords are matching or no
-          // var decrypted = CryptoJS.AES.decrypt(
-          //   user?.password,
-          //   process.env.ENCRYPT_KEY
-          // );
+          var decrypted = CryptoJS.AES.decrypt(
+            user?.password,
+            process.env.ENCRYPT_KEY
+          );
 
-          // original_password = decrypted.toString(CryptoJS.enc.Utf8);
-          // console.log(original_password, req.body, "req.body");
-          // if (original_password !== req.body?.password) {
-          if (!req.body?.password) {
+          original_password = decrypted.toString(CryptoJS.enc.Utf8);
+          console.log(original_password, req.body, "req.body");
+          if (original_password !== req.body?.password) {
             res.status(200).send({
-              status: 'failed',
+              status: "failed",
               message: "Email or Password doesn't match!!!",
             });
           } else {
@@ -72,13 +71,13 @@ module.exports = {
             );
             if (logged_in.ok == 1) {
               res.status(200).send({
-                status: 'success',
+                status: "success",
                 data: { user_details: { ...user?._doc }, token: token },
               });
             } else {
               res.status(200).send({
-                status: 'failed',
-                message: 'Unable to log you In. Please check your fields again',
+                status: "failed",
+                message: "Unable to log you In. Please check your fields again",
               });
             }
           }
@@ -86,10 +85,10 @@ module.exports = {
       } else {
         res
           .status(200)
-          .send({ status: 'failed', message: 'Account is not Active' });
+          .send({ status: "failed", message: "Account is not Active" });
       }
     } catch (err) {
-      res.status(200).send({ status: 'failed', message: err?.message });
+      res.status(200).send({ status: "failed", message: err?.message });
     }
   },
 
@@ -103,12 +102,12 @@ module.exports = {
       if (user) {
         res
           .status(200)
-          .send({ status: 'success', message: 'Logged out successfully' });
+          .send({ status: "success", message: "Logged out successfully" });
       } else {
-        res.status(200).send({ status: 'failed', message: "Can't Log out" });
+        res.status(200).send({ status: "failed", message: "Can't Log out" });
       }
     } catch (err) {
-      res.status(200).send({ status: 'failed', message: err?.message });
+      res.status(200).send({ status: "failed", message: err?.message });
     }
   },
 
@@ -120,19 +119,19 @@ module.exports = {
       if (!email) {
         res
           .status(200)
-          .send({ status: 'failed', message: 'Email is required' });
+          .send({ status: "failed", message: "Email is required" });
         return;
       }
-      console.log(email, 'mahEmail');
+      console.log(email, "mahEmail");
       var userData = await userSchema.find({ email });
-      console.log(userData, 'uset');
+      console.log(userData, "uset");
 
       if (userData?.length > 0) {
         user_id = userData[0]?._id;
       } else {
         res.status(200).send({
-          status: 'failed',
-          message: 'Please enter valid email address',
+          status: "failed",
+          message: "Please enter valid email address",
         });
         return;
       }
@@ -143,23 +142,23 @@ module.exports = {
         { upsert: true, new: true, setDefaultsOnInsert: true },
         async (err, response) => {
           if (!err) {
-            var subject = 'Verfication: Change password';
+            var subject = "Verfication: Change password";
             var sent = await sendMail({ _id: user_id }, subject, sendOtp);
             if (sent === true) {
-              res.status(200).send({ status: 'success', data: response });
+              res.status(200).send({ status: "success", data: response });
             } else {
               res.status(200).send({
-                status: 'failed',
-                message: 'Please enter valid email address',
+                status: "failed",
+                message: "Please enter valid email address",
               });
             }
           } else {
-            res.status(200).send({ status: 'failed', message: err?.message });
+            res.status(200).send({ status: "failed", message: err?.message });
           }
         }
       );
     } catch (err) {
-      res.status(200).send({ status: 'failed', message: err?.message });
+      res.status(200).send({ status: "failed", message: err?.message });
     }
   },
 
@@ -167,11 +166,11 @@ module.exports = {
     try {
       var otp = req?.query?.otp;
       var user_id = req?.query?.user_id;
-      console.log(otp, user_id, 'gggg');
+      console.log(otp, user_id, "gggg");
       if (!user_id || !otp) {
         res
           .status(200)
-          .send({ status: 'failed', message: 'All fields are required' });
+          .send({ status: "failed", message: "All fields are required" });
         return;
       }
       verificationSchema.findOne({ user_id }, (err, response) => {
@@ -181,7 +180,7 @@ module.exports = {
             if (response?.expired) {
               res
                 .status(200)
-                .send({ status: 'failed', message: 'OTP has been expired' });
+                .send({ status: "failed", message: "OTP has been expired" });
               return;
             }
 
@@ -191,7 +190,7 @@ module.exports = {
             ) {
               res
                 .status(200)
-                .send({ status: 'failed', message: 'Verification Timeout' });
+                .send({ status: "failed", message: "Verification Timeout" });
             } else {
               verificationSchema?.findOneAndUpdate(
                 { user_id },
@@ -201,23 +200,23 @@ module.exports = {
                   console.log(dbResponse);
                   if (!err) {
                     res.status(200).send({
-                      status: 'success',
+                      status: "success",
                       data: dbResponse,
-                      message: 'Verfication successful',
+                      message: "Verfication successful",
                     });
                   }
                 }
               );
             }
           } else {
-            res.status(200).send({ status: 'failed', message: 'Invalid OTP' });
+            res.status(200).send({ status: "failed", message: "Invalid OTP" });
           }
         } else {
-          res.status(200).send({ status: 'failed', message: err?.message });
+          res.status(200).send({ status: "failed", message: err?.message });
         }
       });
     } catch (err) {
-      res.status(200).send({ status: 'failed', message: err?.message });
+      res.status(200).send({ status: "failed", message: err?.message });
     }
   },
 };
