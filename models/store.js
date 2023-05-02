@@ -4,6 +4,7 @@ const sportsSchema = new mongoose.Schema({
   id: String,
   name: String,
   description: String,
+  images: [String],
   timing: [
     {
       date: Date,
@@ -27,7 +28,6 @@ const sportsSchema = new mongoose.Schema({
     type: Date,
     default: Date.now,
   },
-  images: [String],
   modified_on: {
     type: Date,
     default: Date.now,
@@ -48,7 +48,6 @@ const bookingSchema = new mongoose.Schema({
   date: String,
   id: String,
   duration: String,
-
 });
 
 const storeSchema = new mongoose.Schema(
@@ -59,8 +58,8 @@ const storeSchema = new mongoose.Schema(
     category: [String],
     image: String,
     location: {
-      type: { type: String },
-      coordinates: [],
+      type: { type: String, default: 'Point' },
+      coordinates: { type: [Number], index: '2dsphere' },
     },
     address: String,
     is_deleted: {
@@ -74,6 +73,6 @@ const storeSchema = new mongoose.Schema(
   { timestamps: true }
 );
 
-storeSchema.index({ location: '2dsphere' });
+// storeSchema.index({ location: '2dsphere' });
 
 module.exports = mongoose.model('Store', storeSchema);

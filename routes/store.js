@@ -7,5 +7,7 @@ storeRouter.post('/', store?.createStore);
 storeRouter.post('/get', store?.getStoresPagination);
 storeRouter.get('/get/:id', store?.getStoreById);
 storeRouter.post('/slot/booking', store?.slotBooking);
+storeRouter.post('/add/store', store?.addStore);
+storeRouter.post('/add/sports/:storeId', store?.createSport);
 
 module.exports = storeRouter;

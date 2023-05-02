@@ -19,7 +19,6 @@ module.exports = {
         latitude,
         address,
         website_url,
-        category,
         is_deleted = false,
       } = req?.body);
 
@@ -30,8 +29,7 @@ module.exports = {
           !latitude ||
           !address ||
           !website_url ||
-          !imageFile ||
-          !category)
+          !imageFile)
       ) {
         res
           .status(200)
@@ -110,7 +108,6 @@ module.exports = {
       res.status(200).send({ status: 'failed', message: err?.message });
     }
   },
-
   getStoresPagination: async (req, res) => {
     try {
       var {
@@ -190,49 +187,27 @@ module.exports = {
           .status(404)
           .json({ message: 'No events found for this user and category' });
       }
-      res.status(200).json(stores);
+      res.status(200).send({ status: 'success', data: stores });
     } catch (err) {
       console.error(err);
       res.status(500).json({ message: 'Server Error' });
     }
   },
-  // slotBooking: async (req, res) => {
-  //   const { storeId, sportId, date, slotIndex ,user_id} = req.body;
-  //   const store = await storeSchema.findById(storeId);
-  //   const sport = store.sports.id(sportId);
-  //   const slot = sport.timing.find(t => t.date === date)[slotIndex];
-  //   if (slot.slots.booked) {
-  //     return res.status(400).json({ message: 'Slot already booked' });
-  //   }
-  //   const booking = {
-  //     user_id: user_id, // assuming you have implemented authentication and have the user object in the request
-  //     timing: {
-  //       start_time: slot.start,
-  //       end_time: slot.end,
-  //     },
-  //     created_on: new Date().toISOString(),
-  //     date,
-  //     id: sportId,
-  //     duration: `${slot.start}-${slot.end}`,
-  //   };
-  //   slot.booked = true;
-  //   slot.bookingId = booking._id;
-  //   store.booking.push(booking);
-  //   await store.save();
-  //   res.status(201).json({ message: 'Booking created', booking });
-  // }
-  slotBooking:async (req, res) => {
+  // new api start from here  for store
+  slotBooking: async (req, res) => {
     try {
       const { storeId, date, start, end, userId, sportId } = req.body;
       const sport = await storeSchema.findOne({ _id: storeId });
       if (!sport) {
         return res.status(404).json({ message: 'Sport not found' });
       }
-      const sportData = sport?.sports?.filter(
-        item => item.id === sportId,
+      const sportData = sport.sports.filter((item) => item._id == sportId);
+      const slot = sportData[0].timing.find(
+        (t) => new Date(t.date).getTime() === new Date(date).getTime()
       );
-      const slot = sportData[0].timing.find(t => new Date(t.date).getTime() === new Date(date).getTime());
-      const availableSlots= slot.slots.find(t=>t.start === start && t.end === end)
+      const availableSlots = slot.slots.find(
+        (t) => t.start === start && t.end === end
+      );
       if (!availableSlots) {
         return res.status(404).json({ message: 'Slot not found' });
       }
@@ -246,16 +221,69 @@ module.exports = {
         date,
         id: new mongoose.Types.ObjectId().toString(),
         duration: `${availableSlots.start}-${availableSlots.end}`,
-        sport_id:sportId
+        sport_id: sportId,
       };
       availableSlots.booked = true;
-      availableSlots.bookingId = booking.id;
+      availableSlots.bookingId = booking._id;
       sport.bookings.push(booking);
       await sport.save();
-      return res.status(201).json({ message: 'Booking created successfully', booking });
+      return res
+        .status(201)
+        .json({ message: 'Booking created successfully', booking });
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: 'Internal server error' });
     }
-  }
+  },
+  addStore: async (req, res) => {
+    console.log(req.body);
+    try {
+      const {
+        store_name,
+        description,
+        website_url,
+        host_id,
+        latitude,
+        longitude,
+        address,
+        image,
+      } = req.body;
+
+      const store = new storeSchema({
+        store_name,
+        description,
+        website_url,
+        host_id,
+        latitude,
+        longitude,
+        address,
+        location: {
+          type: 'Point',
+          coordinates: [longitude, latitude],
+        },
+        image,
+      });
+
+      await store.save();
+      res.status(200).send({ status: 'success', data: store });
+    } catch (error) {
+      res.status(400).send(error);
+    }
+  },
+  createSport: async (req, res) => {
+    try {
+      const storeId = req.params.storeId;
+      const store = await storeSchema.findById(storeId);
+      if (!store) {
+        return res.status(404).send({ message: 'Store not found' });
+      }
+      const sport = req.body;
+      store.sports.push(sport);
+      await store.save();
+      res.status(201).send({ status: 'success', data: sport });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Server error' });
+    }
+  },
 };
