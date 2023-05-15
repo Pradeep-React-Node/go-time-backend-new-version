@@ -286,4 +286,28 @@ module.exports = {
       res.status(500).send({ message: 'Server error' });
     }
   },
+  createSlot: async (req, res) => {
+    try {
+      const storeId = req.params.storeId;
+      const sportId = req.params.sportId;
+      console.log(storeId);
+      console.log(sportId);
+      const store = await storeSchema.findById(storeId);
+      if (!store) {
+        return res.status(404).send({ message: 'Store not found' });
+      }
+      const sport = await store.sports.find((object) => object._id == sportId);
+      if (!sport) {
+        return res.status(404).send({ message: 'Sport not found' });
+      }
+      const slot = req.body;
+      console.log('slot', slot);
+      sport.timing.push(slot);
+      await store.save();
+      res.status(201).send({ status: 'success', data: sport });
+    } catch (error) {
+      console.error(error);
+      res.status(500).send({ message: 'Server error' });
+    }
+  },
 };
