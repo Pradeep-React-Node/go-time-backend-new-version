@@ -310,4 +310,23 @@ module.exports = {
       res.status(500).send({ message: 'Server error' });
     }
   },
+  // GET API to retrieve slot bookings by userId
+  getBookingByUserId: async (req, res) => {
+    try {
+      // Retrieve query parameters
+      const storeId = req.params.storeId;
+      const userId = req.params.userId;
+      // Find the store based on the provided storeId
+      const store = await storeSchema.findById(storeId);
+      if (!store) {
+        return res.status(404).json({ message: 'Store not found' });
+      }
+      // Retrieve the booked slots for the found slot and userId
+      const bookedSlots = store.bookings.filter((t) => t.user_id == userId);
+      return res.status(200).json({ bookings: bookedSlots });
+    } catch (err) {
+      console.error(err);
+      return res.status(500).json({ message: 'Internal server error' });
+    }
+  },
 };
