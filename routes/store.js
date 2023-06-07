@@ -6,7 +6,7 @@ const storeRouter = new express.Router();
 storeRouter.post('/', store?.createStore);
 storeRouter.post('/get', store?.getStoresPagination);
 storeRouter.get('/get/:id', store?.getStoreById);
-storeRouter.get('/get/booking/:storeId/:userId', store?.getBookingByUserId);
+storeRouter.get('/get/booking/:userId', store?.getBookingsByUserId);
 storeRouter.post('/slot/booking', store?.slotBooking);
 storeRouter.post('/add/store', store?.addStore);
 storeRouter.post('/add/sports/:storeId', store?.createSport);

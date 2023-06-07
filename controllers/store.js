@@ -311,19 +311,39 @@ module.exports = {
     }
   },
   // GET API to retrieve slot bookings by userId
-  getBookingByUserId: async (req, res) => {
+  // getBookingByUserId: async (req, res) => {
+  //   try {
+  //     // Retrieve query parameters
+  //     const storeId = req.params.storeId;
+  //     const userId = req.params.userId;
+  //     // Find the store based on the provided storeId
+  //     // const store = await storeSchema.findById(storeId);
+  //     // if (!store) {
+  //     //   return res.status(404).json({ message: 'Store not found' });
+  //     // }
+  //     // Retrieve the booked slots for the found slot and userId
+  //     const bookedSlots = storeSchema.bookings;
+  //     console.log(bookedSlots)
+  //     return false
+  //     return res.status(200).json({ bookings: bookedSlots });
+  //   } catch (err) {
+  //     console.error(err);
+  //     return res.status(500).json({ message: 'Internal server error' });
+  //   }
+  // },
+  getBookingsByUserId: async (req, res) => {
     try {
-      // Retrieve query parameters
-      const storeId = req.params.storeId;
       const userId = req.params.userId;
-      // Find the store based on the provided storeId
-      const store = await storeSchema.findById(storeId);
-      if (!store) {
-        return res.status(404).json({ message: 'Store not found' });
+
+      const bookings = await storeSchema.find({ 'bookings.user_id': userId });
+
+      if (bookings.length === 0) {
+        return res
+          .status(404)
+          .json({ message: 'No bookings found for the specified user' });
       }
-      // Retrieve the booked slots for the found slot and userId
-      const bookedSlots = store.bookings.filter((t) => t.user_id == userId);
-      return res.status(200).json({ bookings: bookedSlots });
+
+      return res.status(200).json({ bookings });
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: 'Internal server error' });
