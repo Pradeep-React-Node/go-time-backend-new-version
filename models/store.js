@@ -48,6 +48,10 @@ const bookingSchema = new mongoose.Schema({
   date: String,
   id: String,
   duration: String,
+  isCanceled: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const storeSchema = new mongoose.Schema(

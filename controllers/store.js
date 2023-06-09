@@ -334,19 +334,44 @@ module.exports = {
   getBookingsByUserId: async (req, res) => {
     try {
       const userId = req.params.userId;
-
       const bookings = await storeSchema.find({ 'bookings.user_id': userId });
-
       if (bookings.length === 0) {
         return res
           .status(404)
           .json({ message: 'No bookings found for the specified user' });
       }
-
       return res.status(200).json({ bookings });
     } catch (err) {
       console.error(err);
       return res.status(500).json({ message: 'Internal server error' });
+    }
+  },
+
+  cancelBooking: async (req, res) => {
+    try {
+      const storeId = req.params.storeId;
+      const bookingId = req.params.bookingId;
+
+      // Find the store by ID
+      const store = await storeSchema.findById(storeId);
+      // Find the booking within the store's bookings array
+
+      const booking = store.bookings.find(
+        (booking) => booking._id == bookingId
+      );
+
+      if (!booking) {
+        return res.status(404).json({ message: 'Booking not found' });
+      }
+
+      // Mark the booking as canceled
+      booking.isCanceled = true;
+      // Save the changes to the store
+      await store.save();
+      res.json({ message: 'Booking canceled successfully' });
+    } catch (error) {
+      console.error(error);
+      res.status(500).json({ message: 'Server error' });
     }
   },
 };
