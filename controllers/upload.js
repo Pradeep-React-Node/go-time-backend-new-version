@@ -28,68 +28,50 @@ module.exports = async (req, res) => {
       );
 
       var newFunc = (url) => {
-        uploadFile(
-          {
-            file: Buffer.from(url, 'base64'),
-            key: `${user_id}/${filename}.${fileExt}`,
-            type: file?.mimetype,
-          },
-          (url) => {
-            console.log(url, 'url');
-            userSchema.findOneAndUpdate(
-              { _id: user_id },
-              { profile_picture: url },
-              { new: true },
-              (err, data) => {
-                if (!err) {
-                  res.status(200).send({ status: 'success', data: data });
-                } else {
-                  res
-                    .status(200)
-                    .send({ status: 'failed', message: err?.message });
-                }
+        cartoon
+          .transform({
+            photo: url,
+          })
+          .then((data) => {
+            uploadFile(
+              {
+                file: Buffer.from(data?.base64Image, 'base64'),
+                key: `${user_id}/${filename}.${fileExt}`,
+                type: file?.mimetype,
+              },
+              (url) => {
+                console.log(url, 'url');
+                userSchema.findOneAndUpdate(
+                  { _id: user_id },
+                  { profile_picture: url },
+                  { new: true },
+                  (err, data) => {
+                    if (!err) {
+                      res.status(200).send({ status: 'success', data: data });
+                    } else {
+                      res
+                        .status(200)
+                        .send({ status: 'failed', message: err?.message });
+                    }
+                  }
+                );
               }
             );
-          }
-        );
+          })
+          .catch((err) => {
+            res
+              .status(200)
+              .send({
+                status: 'failed',
+                message: 'Please upload an image with proper face view',
+              });
+          });
 
         // request({ url: resp?.output_url, encoding: null }, (err, response, body) => {
         //     console.log(body, "bodyy");
 
         // })
       };
-      // var newFunc = (url) => {
-      //     cartoon.transform({
-      //         photo: url
-      //     })
-      //         .then(data => {
-      //             uploadFile(
-      //                 {
-      //                     file: Buffer.from(data?.base64Image, "base64"),
-      //                     key: `${user_id}/${filename}.${fileExt}`,
-      //                     type: file?.mimetype
-      //                 },
-      //                 (url) => {
-      //                     console.log(url, "url");
-      //                     userSchema.findOneAndUpdate({ _id: user_id }, { profile_picture: url }, { new: true }, (err, data) => {
-      //                         if (!err) {
-      //                             res.status(200).send({ status: "success", data: data })
-      //                         } else {
-      //                             res.status(200).send({ status: "failed", message: err?.message })
-      //                         }
-      //                     })
-      //                 }
-      //             )
-      //         })
-      //         .catch(err => {
-      //             res.status(200).send({ status: "failed", message: "Please upload an image with proper face view" })
-      //         })
-
-      //     // request({ url: resp?.output_url, encoding: null }, (err, response, body) => {
-      //     //     console.log(body, "bodyy");
-
-      //     // })
-      // }
     } else {
       res
         .status(200)
