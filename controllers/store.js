@@ -389,41 +389,23 @@ module.exports = {
         .status(500)
         .json({ error: 'An error occurred while retrieving bookings' });
     }
+  },
+  getAllBookingsByUserId: async (req, res) => {
+    try {
+      console.log(`Getting all bookings`, req.params.userId);
+      const stores = await Store.find(); // Retrieve all store documents
+      const bookings = stores
+        .map((store) => store.bookings) // Extract bookings from each store
+        .flat() // Flatten the array of bookings
+        .filter((booking) => booking.user_id === req.params.userId); // Filter bookings by user_id
 
-    // cancel booking using store id and booking id
-    // cancelBooking: async (req, res) => {
-    //   try {
-    //     const { storeId, bookingId } = req.params;
-    //     console.log('Cancel Booking ID:', bookingId);
-
-    //     // Find the store by ID and retrieve the booking
-    //     const store = await Store.findOne({ _id: storeId });
-    //     if (!store) {
-    //       return res.status(404).json({ error: 'Store not found' });
-    //     }
-
-    //     // Find the booking within the store and mark it as canceled
-    //     const booking = store.bookings.id(bookingId);
-    //     if (!booking) {
-    //       return res.status(404).json({ error: 'Booking not found' });
-    //     }
-
-    //     // Modify the booking according to your cancellation logic
-    //     booking.isCanceled = true;
-    //     // Or you can completely remove the booking from the array
-    //     // store.bookings.pull(bookingId);
-
-    //     // Save the updated store
-    //     await store.save();
-
-    //     res.json({ message: 'Booking canceled successfully' });
-    //   } catch (error) {
-    //     console.error('Error canceling booking:', error);
-    //     res
-    //       .status(500)
-    //       .json({ error: 'An error occurred while canceling the booking' });
-    //   }
-    // },
+      res.json(bookings);
+    } catch (error) {
+      console.error('Error getting bookings:', error);
+      res
+        .status(500)
+        .json({ error: 'An error occurred while retrieving bookings' });
+    }
   },
 };
 

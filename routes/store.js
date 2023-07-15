@@ -14,4 +14,5 @@ storeRouter.post('/add/slots/:storeId/:sportId', store?.createSlot);
 // storeRouter.delete('/cancel-booking/:storeId/:bookingId', store?.cancelBooking);
 storeRouter.delete('/cancel-booking/:bookingId', store?.cancelBooking);
 storeRouter.get('/bookings', store?.getAllBookings);
+storeRouter.get('/get-booking-by-user/:userId', store?.getAllBookingsByUserId);
 module.exports = storeRouter;
