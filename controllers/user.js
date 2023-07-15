@@ -4,10 +4,67 @@ var CryptoJS = require('crypto-js');
 const userWalletSchema = require('../models/userWallet');
 
 module.exports = {
-  createUser: (req, res) => {
+  // createUser: (req, res) => {
+  //   try {
+  //     var hashedPassword = req?.body?.password;
+  //     var { _id, password, latitude, longitude, address, ...rest } = req?.body;
+  //     // if (req?.body?.password) {
+  //     //   console.log(password, "pass");
+  //     //   var cipher = CryptoJS.AES.encrypt(password, process.env.ENCRYPT_KEY);
+  //     //   hashedPassword = cipher.toString();
+  //     //   console.log(hashedPassword, "hashPass");
+  //     // }
+  //     var created_id = mongoose.Types.ObjectId();
+  //     query = _id ? { _id: _id } : { _id: created_id };
+  //     var dataToSend =
+  //       longitude && latitude
+  //         ? {
+  //             location: {
+  //               type: 'Point',
+  //               coordinates: [parseFloat(longitude), parseFloat(latitude)],
+  //             },
+  //             address,
+  //           }
+  //         : req?.body?.password
+  //         ? { ...rest, password: hashedPassword, location: {} }
+  //         : { ...rest };
+  //     console.log(dataToSend, 'dtSe');
+  //     userSchema?.findByIdAndUpdate(
+  //       query,
+  //       dataToSend,
+  //       { upsert: true, new: true, setDefaultsOnInsert: true },
+  //       async (err, dbResponse) => {
+  //         console.log(err, 'dbResponse');
+  //         if (!err) {
+  //           var { password, ...newRest } = { ...dbResponse?._doc };
+  //           if (!_id) {
+  //             await userWalletSchema?.create({
+  //               user_id: newRest?._id,
+  //               currency: 'USD',
+  //             });
+  //             res.status(200).send({ status: 'success', data: newRest });
+  //           } else {
+  //             await userWalletSchema?.findByIdAndUpdate({
+  //               user_id: newRest?._id,
+  //               currency: 'USD',
+  //             });
+  //             res.status(200).send({ status: 'success', data: newRest });
+  //           }
+  //         } else {
+  //           res.status(200).send({ status: 'failed', message: err?.message });
+  //         }
+  //       }
+  //     );
+  //   } catch (err) {
+  //     res.status(200).send({ status: 'failed', message: err?.message });
+  //   }
+  // },
+
+  createUser: async (req, res) => {
     try {
       var hashedPassword = req?.body?.password;
-      var { _id, password, latitude, longitude, address, ...rest } = req?.body;
+      var { _id, password, latitude, longitude, address, amount, ...rest } =
+        req?.body;
       // if (req?.body?.password) {
       //   console.log(password, "pass");
       //   var cipher = CryptoJS.AES.encrypt(password, process.env.ENCRYPT_KEY);
@@ -38,13 +95,33 @@ module.exports = {
           if (!err) {
             var { password, ...newRest } = { ...dbResponse?._doc };
             if (!_id) {
-              await userWalletSchema?.create({
+              const newUser = await userWalletSchema?.create({
                 user_id: newRest?._id,
                 currency: 'USD',
+                amount: amount !== undefined ? amount : 0, // Initialize amount to 0 if no amount is provided
               });
-              res.status(200).send({ status: 'success', data: newRest });
+              res
+                .status(200)
+                .send({ status: 'success', data: newRest, wallet: newUser });
             } else {
-              res.status(200).send({ status: 'success', data: newRest });
+              const existingWallet = await userWalletSchema?.findOne({
+                user_id: newRest?._id,
+              });
+              const updatedWallet = await userWalletSchema?.findOneAndUpdate(
+                { user_id: newRest?._id },
+                {
+                  currency: 'USD',
+                  amount:
+                    amount !== undefined ? amount : existingWallet?.amount || 0, // Keep existing amount if no amount is provided
+                },
+                { upsert: true, new: true, setDefaultsOnInsert: true }
+              );
+
+              res.status(200).send({
+                status: 'success',
+                data: newRest,
+                wallet: updatedWallet,
+              });
             }
           } else {
             res.status(200).send({ status: 'failed', message: err?.message });
@@ -55,7 +132,6 @@ module.exports = {
       res.status(200).send({ status: 'failed', message: err?.message });
     }
   },
-
   getUsers: (req, res) => {
     try {
       userSchema?.find(req?.query, '-password', (err, dbResponse) => {

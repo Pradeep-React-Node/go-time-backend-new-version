@@ -1,4 +1,4 @@
-const storeSchema = require('../models/store');
+const { Store, Booking } = require('../models/store');
 var mongoose = require('mongoose');
 const userSchema = require('../models/user');
 const { mapSeries } = require('async');
@@ -71,7 +71,7 @@ module.exports = {
             ? { _id, is_deleted }
             : { ...req?.body, ...imageQuery };
 
-        storeSchema?.findOneAndUpdate(
+        Store?.findOneAndUpdate(
           { _id: _id ? _id : mongoose.Types.ObjectId() },
           query,
           { upsert: true, new: true, setDefaultsOnInsert: true },
@@ -124,39 +124,37 @@ module.exports = {
       var categoryQuery =
         category?.length > 0 ? { query: { category: { $in: category } } } : {};
 
-      var result = await storeSchema
-        .aggregate([
-          longitude && latitude
-            ? {
-                $geoNear: {
-                  near: { type: 'Point', coordinates: [longitude, latitude] },
-                  distanceField: 'calculated',
-                  maxDistance: 200000,
-                  includeLocs: 'location',
-                  ...categoryQuery,
-                  spherical: true,
-                },
-              }
-            : {
-                $addFields: {
-                  _id: {
-                    $toString: '$_id',
-                  },
+      var result = await Store.aggregate([
+        longitude && latitude
+          ? {
+              $geoNear: {
+                near: { type: 'Point', coordinates: [longitude, latitude] },
+                distanceField: 'calculated',
+                maxDistance: 200000,
+                includeLocs: 'location',
+                ...categoryQuery,
+                spherical: true,
+              },
+            }
+          : {
+              $addFields: {
+                _id: {
+                  $toString: '$_id',
                 },
               },
+            },
 
-          category?.length > 0
-            ? { $match: { category: { $in: category } } }
-            : _id
-            ? { $match: { _id: _id } }
-            : { $match: { _id: { $exists: true } } },
-          { $match: { is_deleted } },
-          { $limit: limit },
-          { $skip: (page - 1) * limit },
-        ])
-        .sort('-createdAt');
+        category?.length > 0
+          ? { $match: { category: { $in: category } } }
+          : _id
+          ? { $match: { _id: _id } }
+          : { $match: { _id: { $exists: true } } },
+        { $match: { is_deleted } },
+        { $limit: limit },
+        { $skip: (page - 1) * limit },
+      ]).sort('-createdAt');
       var totalPages;
-      var allData = await storeSchema.find({});
+      var allData = await Store.find({});
       if (limit >= allData?.length) {
         totalPages = 1;
       } else {
@@ -181,7 +179,7 @@ module.exports = {
     const id = req.params.id;
     const query = { _id: id };
     try {
-      const stores = await storeSchema.findOne(query);
+      const stores = await Store.findOne(query);
       if (stores.length === 0) {
         return res
           .status(404)
@@ -197,7 +195,7 @@ module.exports = {
   slotBooking: async (req, res) => {
     try {
       const { storeId, date, start, end, userId, sportId } = req.body;
-      const sport = await storeSchema.findOne({ _id: storeId });
+      const sport = await Store.findOne({ _id: storeId });
       if (!sport) {
         return res.status(404).json({ message: 'Sport not found' });
       }
@@ -249,7 +247,7 @@ module.exports = {
         image,
       } = req.body;
 
-      const store = new storeSchema({
+      const store = new Store({
         store_name,
         description,
         website_url,
@@ -273,7 +271,7 @@ module.exports = {
   createSport: async (req, res) => {
     try {
       const storeId = req.params.storeId;
-      const store = await storeSchema.findById(storeId);
+      const store = await Store.findById(storeId);
       if (!store) {
         return res.status(404).send({ message: 'Store not found' });
       }
@@ -292,7 +290,7 @@ module.exports = {
       const sportId = req.params.sportId;
       console.log(storeId);
       console.log(sportId);
-      const store = await storeSchema.findById(storeId);
+      const store = await Store.findById(storeId);
       if (!store) {
         return res.status(404).send({ message: 'Store not found' });
       }
@@ -317,12 +315,12 @@ module.exports = {
   //     const storeId = req.params.storeId;
   //     const userId = req.params.userId;
   //     // Find the store based on the provided storeId
-  //     // const store = await storeSchema.findById(storeId);
+  //     // const store = await Store.findById(storeId);
   //     // if (!store) {
   //     //   return res.status(404).json({ message: 'Store not found' });
   //     // }
   //     // Retrieve the booked slots for the found slot and userId
-  //     const bookedSlots = storeSchema.bookings;
+  //     const bookedSlots = Store.bookings;
   //     console.log(bookedSlots)
   //     return false
   //     return res.status(200).json({ bookings: bookedSlots });
@@ -334,7 +332,7 @@ module.exports = {
   getBookingsByUserId: async (req, res) => {
     try {
       const userId = req.params.userId;
-      const bookings = await storeSchema.find({ 'bookings.user_id': userId });
+      const bookings = await Store.find({ 'bookings.user_id': userId }).exec();
       if (bookings.length === 0) {
         return res
           .status(404)
@@ -346,32 +344,87 @@ module.exports = {
       return res.status(500).json({ message: 'Internal server error' });
     }
   },
-
+  // cancel booking only booking id
   cancelBooking: async (req, res) => {
     try {
-      const storeId = req.params.storeId;
-      const bookingId = req.params.bookingId;
+      const { bookingId } = req.params;
+      console.log('Cancel Booking ID:', bookingId);
 
-      // Find the store by ID
-      const store = await storeSchema.findById(storeId);
-      // Find the booking within the store's bookings array
-
-      const booking = store.bookings.find(
-        (booking) => booking._id == bookingId
-      );
-
-      if (!booking) {
-        return res.status(404).json({ message: 'Booking not found' });
+      const store = await Store.findOne({ 'bookings._id': bookingId }); // Find the store containing the booking
+      if (!store) {
+        return res.status(404).json({ error: 'Booking not found' });
       }
 
-      // Mark the booking as canceled
+      const booking = store.bookings.id(bookingId); // Find the booking within the store
+      if (!booking) {
+        return res.status(404).json({ error: 'Booking not found' });
+      }
+
+      // Modify the booking according to your cancellation logic
       booking.isCanceled = true;
-      // Save the changes to the store
-      await store.save();
+      // Or you can completely remove the booking from the array
+      // store.bookings.pull(bookingId);
+
+      await store.save(); // Save the updated store
+
       res.json({ message: 'Booking canceled successfully' });
     } catch (error) {
-      console.error(error);
-      res.status(500).json({ message: 'Server error' });
+      console.error('Error canceling booking:', error);
+      res
+        .status(500)
+        .json({ error: 'An error occurred while canceling the booking' });
     }
   },
+
+  // get all booking
+  getAllBookings: async (req, res) => {
+    try {
+      const stores = await Store.find(); // Retrieve all store documents
+      const bookings = stores.map((store) => store.bookings).flat(); // Extract bookings from each store and flatten the array
+
+      res.json(bookings);
+    } catch (error) {
+      console.error('Error getting bookings:', error);
+      res
+        .status(500)
+        .json({ error: 'An error occurred while retrieving bookings' });
+    }
+
+    // cancel booking using store id and booking id
+    // cancelBooking: async (req, res) => {
+    //   try {
+    //     const { storeId, bookingId } = req.params;
+    //     console.log('Cancel Booking ID:', bookingId);
+
+    //     // Find the store by ID and retrieve the booking
+    //     const store = await Store.findOne({ _id: storeId });
+    //     if (!store) {
+    //       return res.status(404).json({ error: 'Store not found' });
+    //     }
+
+    //     // Find the booking within the store and mark it as canceled
+    //     const booking = store.bookings.id(bookingId);
+    //     if (!booking) {
+    //       return res.status(404).json({ error: 'Booking not found' });
+    //     }
+
+    //     // Modify the booking according to your cancellation logic
+    //     booking.isCanceled = true;
+    //     // Or you can completely remove the booking from the array
+    //     // store.bookings.pull(bookingId);
+
+    //     // Save the updated store
+    //     await store.save();
+
+    //     res.json({ message: 'Booking canceled successfully' });
+    //   } catch (error) {
+    //     console.error('Error canceling booking:', error);
+    //     res
+    //       .status(500)
+    //       .json({ error: 'An error occurred while canceling the booking' });
+    //   }
+    // },
+  },
 };
+
+// Define the cancel booking route

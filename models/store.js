@@ -46,7 +46,6 @@ const bookingSchema = new mongoose.Schema({
   },
   created_on: String,
   date: String,
-  id: String,
   duration: String,
   isCanceled: {
     type: Boolean,
@@ -79,4 +78,11 @@ const storeSchema = new mongoose.Schema(
 
 // storeSchema.index({ location: '2dsphere' });
 
-module.exports = mongoose.model('Store', storeSchema);
+// Define Store model
+// Define the Store model
+const Store = mongoose.model('Store', storeSchema);
+
+// Define the Booking model
+const Booking = mongoose.model('Booking', bookingSchema);
+
+module.exports = { Store, Booking };

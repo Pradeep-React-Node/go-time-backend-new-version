@@ -11,5 +11,7 @@ storeRouter.post('/slot/booking', store?.slotBooking);
 storeRouter.post('/add/store', store?.addStore);
 storeRouter.post('/add/sports/:storeId', store?.createSport);
 storeRouter.post('/add/slots/:storeId/:sportId', store?.createSlot);
-storeRouter.post('/cancel-booking/:storeId/:bookingId', store?.cancelBooking);
+// storeRouter.delete('/cancel-booking/:storeId/:bookingId', store?.cancelBooking);
+storeRouter.delete('/cancel-booking/:bookingId', store?.cancelBooking);
+storeRouter.get('/bookings', store?.getAllBookings);
 module.exports = storeRouter;
